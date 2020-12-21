@@ -269,8 +269,8 @@ async function pollingLoop() {
   vindex++;
   if (vindex > 4) vindex = 2;
   //check again in 3 minutes
-  //setTimeout(pollingLoop, 3 * 60 * 1000)
-  setTimeout(pollingLoop, 10 * 1000)
+  setTimeout(pollingLoop, 3 * 60 * 1000)
+  //test-mode every 10 secs: setTimeout(pollingLoop, 10 * 1000)
 }
 
 

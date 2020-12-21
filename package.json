@@ -4,7 +4,8 @@
   "description": "polls validator node logs and restarts the node if they don't look good",
   "scripts": {
     "build": "tsc && cp -ur bash-scripts/* dist/",
-    "test": "node dist/test.js"
+    "test": "cd dist && node test/test",
+    "start": "cd dist && node main"
   },
   "keywords": [
     "near",
