@@ -46,8 +46,10 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
     </table>
     `);
     resp.write("<br><hr><br>")
+    resp.write("<pre>")
     let tailText = spawn("tail",["validator-health.log","-n","800"])
-    resp.end(tailText)
+    resp.write(tailText)
+    resp.end("</pre>")
 
   // }
   // else if (urlParts.pathname === '/ping') {
