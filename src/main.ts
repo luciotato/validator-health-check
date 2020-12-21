@@ -28,13 +28,13 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
   //urlParts.query: the result of nodejs [querystring.parse] (http://nodejs.org/api/querystring.html)
 
   if (urlParts.pathname === '/') {
-    //GET / (root) web server returns:
-    server.writeFileContents('index.html', resp);
-    resp.end();
-    return true;
-  }
+  //   //GET / (root) web server returns:
+  //   server.writeFileContents('index.html', resp);
+  //   resp.end();
+  //   return true;
+  // }
 
-  else if (urlParts.pathname === '/stats') {
+  // else if (urlParts.pathname === '/stats') {
     resp.end(`
     <table>
     <tr><td>Start</td><td>${StarDateTime.toString()}</td></tr>    
@@ -46,16 +46,16 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
     </table>
     `);
 
-  }
-  else if (urlParts.pathname === '/ping') {
-    resp.end("pong");
-  }
-  else if (urlParts.pathname === '/shutdown') {
-    process.exit(1);
-  }
-  else {
-    respond_error(500, 'invalid path ' + urlParts.pathname, resp);
-  };
+  // }
+  // else if (urlParts.pathname === '/ping') {
+  //   resp.end("pong");
+  // }
+  // else if (urlParts.pathname === '/shutdown') {
+  //   process.exit(1);
+  // }
+  // else {
+  //   respond_error(500, 'invalid path ' + urlParts.pathname, resp);
+   };
 
   return true;
 };
@@ -220,7 +220,7 @@ async function checkHealth(vindex: number) {
     }
   }
 
-  console.log(vindex,"lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating)
+  console.log(new Date(), vindex, "lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating)
 
   const info = get_db_info(vindex)
   const prevBlock = info.lastBlock
@@ -299,7 +299,8 @@ let credentials = JSON.parse(credentialsString)
 //We start a barebones minimal web server 
 //When a request arrives, it will call appHandler(urlParts, request, response)
 const server = new BareWebServer('../public_html', appHandler, 7000)
-server.start();
+
+server.start()
 
 //check for pending requests in the SC and resolve them
 pollingLoop();

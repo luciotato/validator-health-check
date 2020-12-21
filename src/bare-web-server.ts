@@ -52,10 +52,12 @@ export class BareWebServer {
 
         //static files content handler
         this.httpServer = http.createServer(this.minimalHandler.bind(this));
+        this.httpServer.requestTimeout=10*1000
 
     }
 
     start() {
+        console.log(new Date())
         this.httpServer.listen(this.port);
         console.log("nodejs version: " + process.version + "\nBare Web Server listening on port " + this.port + "\nwwwRoot: " + this.wwwRoot);
     }
