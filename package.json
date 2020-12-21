@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc && cp -ur bash-scripts/* dist/",
     "test": "cd dist && node test/test",
-    "start": "cd dist && node main"
+    "start": "npm build && cd dist && node main"
   },
   "keywords": [
     "near",
