@@ -35,7 +35,7 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
   // }
 
   // else if (urlParts.pathname === '/stats') {
-    resp.end(`
+    resp.write(`
     <table>
     <tr><td>Start</td><td>${StarDateTime.toString()}</td></tr>    
     <tr><td>Total Polling Calls</td><td>${TotalPollingCalls}</td></tr>    
@@ -45,6 +45,9 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
     <tr><td>Total Restarts because errors</td><td>${TotalRestartsBecauseErrors}</td></tr>    
     </table>
     `);
+    resp.write("<br><hr><br>")
+    let tailText = spawn("tail",["validator-health.log","-n","800"])
+    resp.end(tailText)
 
   // }
   // else if (urlParts.pathname === '/ping') {

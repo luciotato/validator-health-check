@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc && cp -ur bash-scripts/* dist/",
     "test": "cd dist && node test/test",
-    "start": "npm run build && cd dist && node main"
+    "start-test": "npm run build && cd dist && node main",
+    "server": "nohup npm run start >>validator-health.log &"
   },
   "keywords": [
     "near",
