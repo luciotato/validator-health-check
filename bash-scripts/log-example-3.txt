@@ -1,0 +1,20 @@
+[2mDec 21 01:59:28.333[0m [32m INFO[0m stats: [1;33m#13484973 qxnoZ2Fxq5j25UURFSmRbaWQnUV5JeCYauqesskxbhK[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 138.9kiB/s â¬† 59.1kiB/s[0m [1;32m1.50 bps 0 gas/s[0m [1;34mCPU: 10%, Mem: 1.2 GiB[0m    
+[2mDec 21 01:59:28.333[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 01:59:38.335[0m [32m INFO[0m stats: [1;33m#13484987 9j8FpMq7PqVksSqF9Y9P5vTqCPCNGCFYoPhqqFPrPkhh[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 168.7kiB/s â¬† 70.9kiB/s[0m [1;32m1.40 bps 0 gas/s[0m [1;34mCPU: 10%, Mem: 1.2 GiB[0m    
+[2mDec 21 01:59:38.335[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 01:59:48.337[0m [32m INFO[0m stats: [1;33m#13485003 JB3Z8URtiqmzcqvuPTMgVLBGkLxioBpZbCDE2ZaS2iUu[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 170.6kiB/s â¬† 72.8kiB/s[0m [1;32m1.60 bps 0 gas/s[0m [1;34mCPU: 10%, Mem: 1.2 GiB[0m    
+[2mDec 21 01:59:48.337[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 01:59:58.339[0m [32m INFO[0m stats: [1;33m#13485005 EfyKgCyayiu45G4CxkUXjVRKxp3e9HrA7RRtVNx5piXZ[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 168.5kiB/s â¬† 71.5kiB/s[0m [1;32m0.20 bps 0 gas/s[0m [1;34mCPU: 3%, Mem: 1.2 GiB[0m    
+[2mDec 21 01:59:58.339[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 02:00:08.341[0m [32m INFO[0m stats: [1;33m#13485018 4LL26r25CeQCfUbC216PmbpuCxfPq4JZ7i5GrvBK3LFj[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 165.0kiB/s â¬† 69.3kiB/s[0m [1;32m1.20 bps 1.05 Tgas/s[0m [1;34mCPU: 11%, Mem: 1.2 GiB[0m    
+[2mDec 21 02:00:08.342[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 02:00:18.343[0m [32m INFO[0m stats: [1;33m#13485033 5hAVPssHckWKiKZf8Skxiz9UuEg3BXze4aw1SVUZe2GW[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 168.0kiB/s â¬† 70.8kiB/s[0m [1;32m1.50 bps 138.00 Ggas/s[0m [1;34mCPU: 10%, Mem: 1.2 GiB[0m    
+[2mDec 21 02:00:18.343[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 02:00:28.345[0m [32m INFO[0m stats: [1;33m#13485043 286kqzr9V3hcWHGpqAsGeJxQfreZx8e2P9Hw163UdFbn[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 171.3kiB/s â¬† 71.6kiB/s[0m [1;32m1.00 bps 0 gas/s[0m [1;34mCPU: 7%, Mem: 1.2 GiB[0m    
+[2mDec 21 02:00:28.345[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 02:00:38.348[0m [32m INFO[0m stats: [1;33m#13485051 CW5kvtvkAQsfK7UgA9mTNXEXb7xzZbu4e6ZuerJ4yyov[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 142.5kiB/s â¬† 60.0kiB/s[0m [1;32m0.70 bps 0 gas/s[0m [1;34mCPU: 6%, Mem: 1.2 GiB[0m    
+[2mDec 21 02:00:38.348[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 02:00:48.349[0m [32m INFO[0m stats: [1;33m#13485067 9Xse8NqABtvNLzxyLbiinDucB3vHc5sQyhZS5XAYo452[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 145.0kiB/s â¬† 59.5kiB/s[0m [1;32m1.60 bps 0 gas/s[0m [1;34mCPU: 11%, Mem: 1.2 GiB[0m    
+[2mDec 21 02:00:48.350[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error
+[2mDec 21 02:00:58.351[0m [32m INFO[0m stats: [1;33m#13485080 BbNNb8KMRYyaHaCrXAqta96yqYbUK5Wv1Kw2yjTWTjdz[0m [1;37mV/10[0m [1;36m 4/4/40 peers â¬‡ 166.2kiB/s â¬† 68.8kiB/s[0m [1;32m1.30 bps 0 gas/s[0m [1;34mCPU: 10%, Mem: 1.2 GiB[0m    
+[2mDec 21 02:00:58.351[0m [32m INFO[0m telemetry: Telemetry data could not be sent due to: protocol error: not a result of an error

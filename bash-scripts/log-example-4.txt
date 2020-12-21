@@ -1,0 +1,20 @@
+             at src/libstd/sys_common/backtrace.rs:62
+   7: std::sys_common::backtrace::print
+             at src/libstd/sys_common/backtrace.rs:49
+   8: std::panicking::default_hook::{{closure}}
+             at src/libstd/panicking.rs:198
+   9: std::panicking::default_hook
+             at src/libstd/panicking.rs:218
+  10: near_actix_utils::init_stop_on_panic::{{closure}}::{{closure}}
+  11: std::panicking::rust_panic_with_hook
+             at src/libstd/panicking.rs:481
+  12: rust_begin_unwind
+             at src/libstd/panicking.rs:385
+  13: core::panicking::panic_fmt
+             at src/libcore/panicking.rs:89
+  14: core::option::expect_none_failed
+             at src/libcore/option.rs:1272
+  15: near::main
+  16: std::rt::lang_start_internal::{{closure}}::{{closure}}
+             at src/libstd/rt.rs:52
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

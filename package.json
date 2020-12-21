@@ -1,0 +1,29 @@
+{
+  "name": "validator-health-check",
+  "version": "1.0.0",
+  "description": "polls validator node logs and restarts the node if they don't look good",
+  "scripts": {
+    "build": "tsc && cp -ur bash-scripts/* dist/",
+    "test": "node dist/test.js"
+  },
+  "keywords": [
+    "near",
+    "guildnet",
+    "validator",
+    "automation"
+  ],
+  "author": "Narwallets.com",
+  "license": "ISC",
+  "dependencies": {
+    "bn": "^1.0.5",
+    "bn.js": "^5.1.3",
+    "dotenv": "^8.2.0",
+    "js-sha256": "^0.9.0",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^4.11.6",
+    "@types/node": "^14.14.11",
+    "typescript": "^4.0.3"
+  }
+}
