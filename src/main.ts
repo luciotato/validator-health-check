@@ -298,7 +298,7 @@ let credentials = JSON.parse(credentialsString)
 //------------
 //We start a barebones minimal web server 
 //When a request arrives, it will call appHandler(urlParts, request, response)
-const server = new BareWebServer('public_html', appHandler, 7000)
+const server = new BareWebServer('../public_html', appHandler, 7000)
 server.start();
 
 //check for pending requests in the SC and resolve them
