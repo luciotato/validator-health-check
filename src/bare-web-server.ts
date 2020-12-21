@@ -69,7 +69,7 @@ export class BareWebServer {
     minimalHandler(req: http.IncomingMessage, resp: http.ServerResponse) {
         try {
 
-            console.log('' + req.method + " " + req.url);
+            //console.log('' + req.method + " " + req.url);
 
             //parse request url. [url.parse] (http://nodejs.org/docs/latest/api/url.html)
             var urlParts = url.parse(req.url||"", true);
