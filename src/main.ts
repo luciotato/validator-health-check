@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as url from 'url';
 
+import { inspect } from 'util';
+
 import { BareWebServer, respond_error } from './bare-web-server.js';
 import * as near from './near-api/near-rpc.js';
 import * as network from './near-api/network.js';
@@ -16,8 +18,30 @@ const StarDateTime = new Date()
 let TotalPollingCalls = 0
 let TotalNotValidating = 0
 let TotalRestarts = 0
+let TotalPings = 0
 let TotalRestartsBcTime = 0
 let TotalRestartsBecauseErrors = 0
+
+//---------------------
+function sp_contract(vindex:number): string{
+  return "staking-pool-"+vindex+"."+NETWORK;
+}
+
+//---------------------
+function getVindexFromQuery(urlParts:url.UrlWithParsedQuery, resp: http.ServerResponse): number {
+  if (typeof urlParts.query["q"] != "string") {
+    resp.end("query must be 2-4 and received:" + JSON.stringify(urlParts.query) + (typeof urlParts.query));
+    return 0;
+  }
+  else {
+    let vindex = parseInt(urlParts.query["q"]);
+    if (isNaN(vindex) || vindex < 2 || vindex > 4) {
+      resp.end("vindex must be 2-4 and received:" + urlParts.query);
+      return 0;
+    }
+    return vindex;
+  }
+}
 
 //------------------------------------------
 //Main HTTP-Request Handler - stats server
@@ -41,11 +65,17 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
       <tr><td>Start</td><td>${StarDateTime.toString()}</td></tr>    
       <tr><td>Total Polling Calls</td><td>${TotalPollingCalls}</td></tr>    
       <tr><td>Total Polling and not Validating</td><td>${TotalNotValidating}</td></tr>    
+      <tr><td>Total Pings</td><td>${TotalPings}</td></tr>    
       <tr><td>Total Restarts</td><td>${TotalRestarts}</td></tr>    
       <tr><td>Total Restarts because time passed</td><td>${TotalRestartsBcTime}</td></tr>    
       <tr><td>Total Restarts because errors</td><td>${TotalRestartsBecauseErrors}</td></tr>    
       </table>
       `);
+      resp.write("<br><hr><br>")
+      readDatabase();
+      resp.write("<pre>")
+      resp.write(inspect(database,{ compact: true, depth: 5}));
+      resp.write("</pre>")
       resp.write("<br><hr><br>")
       resp.write("<pre>")
       let tailText = spawnSync("tail", ["validator-health.log", "-n", "400"])
@@ -58,22 +88,18 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
     }
 
     else if (urlParts.pathname === '/restart') {
-      if (typeof urlParts.query["q"] != "string") {
-        resp.end("query must be 2-4 and received:" + JSON.stringify(urlParts.query) + (typeof urlParts.query));
-      }
-      else {
-        let vindex = parseInt(urlParts.query["q"]);
-        if (isNaN(vindex) || vindex < 2 || vindex > 4) {
-          resp.end("vindex must be 2-4 and received:" + urlParts.query);
-        }
-        else {
-          restart(vindex)
-          resp.end("restaring " + vindex);
-        }
+      let vindex = getVindexFromQuery(urlParts,resp);
+      if (vindex) {
+        restart(vindex)
+        resp.end("restaring " + vindex);
       }
     }
-    else if (urlParts.pathname === '/stats') {
-      resp.end("none");
+    else if (urlParts.pathname === '/ping') {
+      let vindex = getVindexFromQuery(urlParts, resp);
+      if (vindex) {
+        ping(vindex)
+        resp.end("PING " + vindex);
+      }
     }
     else if (urlParts.pathname === '/ping') {
       resp.end("pong");
@@ -120,6 +146,7 @@ function get_db_info(vindex: number) {
   let info = database.info[vindex]
   if (!info) {
     info = {
+      lastPing: Date.now()-1*24*60*60*1000,
       lastRestart: Date.now(),
       lastBlock: 0,
     }
@@ -128,12 +155,25 @@ function get_db_info(vindex: number) {
   return info
 }
 
+//-------------------------------------------------
 function restart(vindex: number) {
   console.log("RESTARTING", vindex)
   spawnAsync("bash", ["restart.sh", vindex + ""])
   TotalRestarts++;
   const info = get_db_info(vindex)
   info.lastRestart = Date.now()
+  saveDatabase()
+}
+
+//-------------------------------------------------
+async function ping(vindex: number) {
+  console.log("PING", vindex)
+  //if resolved, remove pending from pending list in GATEWAY_CONTRACT_ID
+  let result =  await near.call(sp_contract(vindex), "ping", {}, credentials.account_id, credentials.private_key, 100)
+  console.log(result.status)
+  TotalPings++;
+  const info = get_db_info(vindex)
+  info.lastPing = Date.now()
   saveDatabase()
 }
 
@@ -149,7 +189,7 @@ function hoursSince(when: number): number {
 async function checkHealth(vindex: number) {
 
   const container = "nearup" + vindex;
-  const account = "staking-pool-" + vindex;
+  const filter = "staking-pool-" + vindex;
 
   let logs = spawnSync("bash", ["get-logs.sh", vindex + ""])
 
@@ -158,8 +198,8 @@ async function checkHealth(vindex: number) {
   let isOk = true
   let isValidating = false
   let lastBlock = 0;
-  let lineCount =0;
-  let unkLines =0;
+  let lineCount = 0;
+  let unkLines = 0;
 
   let errCount = 0
 
@@ -194,9 +234,9 @@ async function checkHealth(vindex: number) {
     }
   }
 
-  if (lastBlock==0) isOk=false;
+  if (lastBlock == 0) isOk = false;
 
-  console.log(new Date(), vindex, "lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating, "lineCount",lineCount,"unkLines:",unkLines)
+  console.log(new Date(), vindex, "lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating, "lineCount", lineCount, "unkLines:", unkLines)
 
   const info = get_db_info(vindex)
   const prevBlock = info.lastBlock
@@ -227,6 +267,10 @@ async function checkHealth(vindex: number) {
       restart(vindex)
       TotalRestartsBcTime++;
     }
+    else if (!isValidating && hoursSince(info.lastPing) >= 1) {
+      ping(vindex) //ping every hour
+      TotalPings++;
+    }
   }
 
 }
@@ -252,6 +296,7 @@ async function pollingLoop() {
 
 type ValidatorInfo = {
   lastRestart: number;
+  lastPing: number;
   lastBlock: number;
 }
 type Database = {
