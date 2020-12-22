@@ -31,7 +31,7 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
 
   try {
     if (urlParts.pathname === '/favicon.ico') {
-      respond_error(404,"",resp)
+      respond_error(404, "", resp)
     }
     else if (urlParts.pathname === '/') {
       //GET / (root) web server returns:
@@ -201,6 +201,8 @@ async function checkHealth(vindex: number) {
   let isOk = true
   let isValidating = false
   let lastBlock = 0;
+  let lineCount =0;
+  let unkLines =0;
 
   let errCount = 0
 
@@ -210,15 +212,21 @@ async function checkHealth(vindex: number) {
     if (!line) continue;
 
     try {
+      lineCount++;
       let words = line.split(' ')
-      if (words[4] != "INFO") {
-        isOk = false;
+      if (words[4] == "WARN") {
+        //ignore;
       }
-      if (words[6].startsWith("#")) {
-        lastBlock = parseInt(words[6].slice(1));
+      else if (words[4] == "INFO") {
+        if (words[6].startsWith("#")) {
+          lastBlock = parseInt(words[6].slice(1));
+        }
+        if (words[8].startsWith("V")) {
+          isValidating = true;
+        }
       }
-      if (words[8].startsWith("V")) {
-        isValidating = true;
+      else {
+        unkLines++;
       }
     } catch (ex) {
       console.log(line)
@@ -229,7 +237,9 @@ async function checkHealth(vindex: number) {
     }
   }
 
-  console.log(new Date(), vindex, "lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating)
+  if (lastBlock==0) isOk=false;
+
+  console.log(new Date(), vindex, "lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating, "lineCount",lineCount,"unkLines:",unkLines)
 
   const info = get_db_info(vindex)
   const prevBlock = info.lastBlock
@@ -252,7 +262,7 @@ async function checkHealth(vindex: number) {
     TotalRestartsBecauseErrors++;
   }
   else if (info.lastRestart) {
-    if (hoursSince(info.lastRestart) >= 12) {
+    if (hoursSince(info.lastRestart) >= 48) {
       restart(vindex)
       TotalRestartsBcTime++;
     }
