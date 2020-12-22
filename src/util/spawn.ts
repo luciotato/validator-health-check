@@ -30,7 +30,7 @@ export function yton(yoctos:string):string {
 
 export function spawnSync(command:string, args:(string|any)[]):string {
     
-    console.log("spawnSync:",command,args.join(" "))
+    if (debug) console.log("spawnSync:",command,args.join(" "))
     const execResult = child_process.spawnSync(command, args, { shell: true }) // shell:true => to be able to invoke near-cli on windows
 
     // console.log(execResult.stdout.toString())
@@ -66,7 +66,7 @@ export function spawnSync(command:string, args:(string|any)[]):string {
 }
 
 export function spawnAsync(command:string, args:(string|any)[]):void {
-    console.log("spawnAsync:",command,args.join(" "))
+    if (debug) console.log("spawnAsync:",command,args.join(" "))
     const ls = child_process.spawn( command, args );
     ls.stdout.on( 'data', data => {
         console.log( `stdout: ${data}` );

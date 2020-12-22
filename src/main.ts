@@ -48,7 +48,7 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
       `);
       resp.write("<br><hr><br>")
       resp.write("<pre>")
-      let tailText = spawnSync("tail", ["validator-health.log", "-n", "800"])
+      let tailText = spawnSync("tail", ["validator-health.log", "-n", "400"])
       resp.write(tailText)
       resp.end("</pre>")
 
@@ -95,54 +95,11 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
   return true;
 };
 
-//struct returned from get_account_info
-export type PendingRequest = {
-  //the requesting contract
-  contract_account_id: string;
-  /// A request-id internal to requesting contract
-  request_id: string; //U128,
-  /// DIA API Key
-  data_key: string;
-  ///DIA API Item
-  data_item: string;
-  /// cablack method to invoke with the data
-  callback: string;
-}
-
 class ErrData {
   public err: string = "";
   public data: any = null;
 }
 
-//------------------------------
-//--  fetch api.diadata.org
-//------------------------------
-async function fetchDiaJson(endpointPlusParam: string): Promise<ErrData> {
-
-  let response: ErrData;
-
-  const fullEndpoint = "https://api.diadata.org/v1/" + endpointPlusParam
-  const fetchResult = await fetch(fullEndpoint)
-  let errGetJson: string = "";
-  let jsonData;
-  try {
-    jsonData = await fetchResult.json()
-  }
-  catch (ex) {
-    errGetJson = ex.message;
-    jsonData = undefined;
-  }
-
-  if (!fetchResult.ok) throw Error(fullEndpoint + " " + fetchResult.status + " " + fetchResult.statusText)
-  if (!jsonData) throw Error(fullEndpoint + " ERR:EMPTY RESPONSE " + errGetJson)
-  if (jsonData.errorcode) { //some error reported by the diadata server. e.g. unexistent coin
-    throw Error(fullEndpoint + JSON.stringify(jsonData))
-  }
-
-  response = new ErrData()
-  response.data = jsonData;
-  return response
-}
 
 
 function saveDatabase() {
@@ -262,7 +219,7 @@ async function checkHealth(vindex: number) {
     TotalRestartsBecauseErrors++;
   }
   else if (info.lastRestart) {
-    if (hoursSince(info.lastRestart) >= 48) {
+    if (hoursSince(info.lastRestart) >= 48) { //restart every 2 days
       restart(vindex)
       TotalRestartsBcTime++;
     }
