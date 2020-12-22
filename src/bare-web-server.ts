@@ -37,6 +37,7 @@ export class BareWebServer {
     wwwRoot: string
     appHandler: AppRequestHandlerFunction
 
+    // ---------------------------
     //    public function start( staticDir:string, aAppHandler:function, port)
     // ---------------------------
     //Start the web server
@@ -81,7 +82,7 @@ export class BareWebServer {
             }
 
             else {
-                this.respondWithFile(urlParts.pathname||"", resp);
+                this.endWithFile(urlParts.pathname||"", resp);
             };
 
         }
@@ -95,16 +96,16 @@ export class BareWebServer {
 
     //  helper function findPath(pathname) // return full path / undefined if not found
     // ---------------------------
-    findPath(pathname:string):string {
+    findPathAndFilename(url:string):string {
 
         let result:string;
         //console.log("findPath %s",pathname);
-        if (pathname === path.sep) {
+        if (url === path.sep) {
             result = this.wwwRoot;
         }
         else {
             //result = path.join(wwwRoot, pathname)
-            result = path.join(this.wwwRoot, pathname);
+            result = path.join(this.wwwRoot, url);
         };
 
         // check if file exists
@@ -120,30 +121,24 @@ export class BareWebServer {
     // ---------------------------
     //method writeFileContents(filename)
     // ---------------------------
-    writeFileContents(filename:string, resp:http.ServerResponse): boolean {
+    writeFileContents(filename:string, resp:http.ServerResponse) {
 
-        const fullPath = this.findPath(filename)
-        if (!fullPath){
-            respond_error(404,filename+" NOT FOUND",resp)   
-            return false;
-        }
+        const fullPath = this.findPathAndFilename(filename)
+        if (!fullPath) throw Error(filename+" NOT FOUND");
         // add headers
         //writeHeadersFor(path.extname(fullpath), resp);
 
         var file = fs.readFileSync(fullPath);
         //send read file
         resp.write(file);
-        return true
     }
 
     // -------------------
     // method respondWithFile(file)
     // ---------------------------
-    respondWithFile(file:string, resp:http.ServerResponse) {
-        if (this.writeFileContents(file,resp)) {
-            resp.end();
-        }
-        
+    endWithFile(file:string, resp:http.ServerResponse) {
+        this.writeFileContents(file,resp)
+        resp.end();
     }
 
 }

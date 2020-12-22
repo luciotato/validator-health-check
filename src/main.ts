@@ -6,7 +6,7 @@ import * as url from 'url';
 import { BareWebServer, respond_error } from './bare-web-server.js';
 import * as near from './near-api/near-rpc.js';
 import * as network from './near-api/network.js';
-import { spawn } from './util/spawn.js';
+import { spawnSync, spawnAsync } from './util/spawn.js';
 
 const NETWORK = "guildnet"
 network.setCurrent(NETWORK)
@@ -24,44 +24,74 @@ let TotalRestartsBecauseErrors = 0
 //------------------------------------------
 function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req: http.IncomingMessage, resp: http.ServerResponse) {
 
+  resp.on("error", (err) => { console.error(err) })
+
   //urlParts: the result of nodejs [url.parse] (http://nodejs.org/docs/latest/api/url.html)
   //urlParts.query: the result of nodejs [querystring.parse] (http://nodejs.org/api/querystring.html)
 
-  if (urlParts.pathname === '/') {
-  //   //GET / (root) web server returns:
-  //   server.writeFileContents('index.html', resp);
-  //   resp.end();
-  //   return true;
-  // }
+  try {
+    if (urlParts.pathname === '/favicon.ico') {
+      respond_error(404,"",resp)
+    }
+    else if (urlParts.pathname === '/') {
+      //GET / (root) web server returns:
+      server.writeFileContents("index-head.html", resp);
+      resp.write(`
+      <table>
+      <tr><td>Start</td><td>${StarDateTime.toString()}</td></tr>    
+      <tr><td>Total Polling Calls</td><td>${TotalPollingCalls}</td></tr>    
+      <tr><td>Total Polling and not Validating</td><td>${TotalNotValidating}</td></tr>    
+      <tr><td>Total Restarts</td><td>${TotalRestarts}</td></tr>    
+      <tr><td>Total Restarts because time passed</td><td>${TotalRestartsBcTime}</td></tr>    
+      <tr><td>Total Restarts because errors</td><td>${TotalRestartsBecauseErrors}</td></tr>    
+      </table>
+      `);
+      resp.write("<br><hr><br>")
+      resp.write("<pre>")
+      let tailText = spawnSync("tail", ["validator-health.log", "-n", "800"])
+      resp.write(tailText)
+      resp.end("</pre>")
 
-  // else if (urlParts.pathname === '/stats') {
-    resp.write(`
-    <table>
-    <tr><td>Start</td><td>${StarDateTime.toString()}</td></tr>    
-    <tr><td>Total Polling Calls</td><td>${TotalPollingCalls}</td></tr>    
-    <tr><td>Total Polling and not Validating</td><td>${TotalNotValidating}</td></tr>    
-    <tr><td>Total Restarts</td><td>${TotalRestarts}</td></tr>    
-    <tr><td>Total Restarts because time passed</td><td>${TotalRestartsBcTime}</td></tr>    
-    <tr><td>Total Restarts because errors</td><td>${TotalRestartsBecauseErrors}</td></tr>    
-    </table>
-    `);
-    resp.write("<br><hr><br>")
-    resp.write("<pre>")
-    let tailText = spawn("tail",["validator-health.log","-n","800"])
-    resp.write(tailText)
-    resp.end("</pre>")
+      //   server.writeFileContents('index.html', resp);
+      //   resp.end();
+      //   return true;
+    }
 
-  // }
-  // else if (urlParts.pathname === '/ping') {
-  //   resp.end("pong");
-  // }
-  // else if (urlParts.pathname === '/shutdown') {
-  //   process.exit(1);
-  // }
-  // else {
-  //   respond_error(500, 'invalid path ' + urlParts.pathname, resp);
-   };
-
+    else if (urlParts.pathname === '/restart') {
+      if (typeof urlParts.query["q"] != "string") {
+        resp.end("query must be 2-4 and received:" + JSON.stringify(urlParts.query) + (typeof urlParts.query));
+      }
+      else {
+        let vindex = parseInt(urlParts.query["q"]);
+        if (isNaN(vindex) || vindex < 2 || vindex > 4) {
+          resp.end("vindex must be 2-4 and received:" + urlParts.query);
+        }
+        else {
+          restart(vindex)
+          resp.end("restaring " + vindex);
+        }
+      }
+    }
+    else if (urlParts.pathname === '/stats') {
+      resp.end("none");
+    }
+    else if (urlParts.pathname === '/ping') {
+      resp.end("pong");
+    }
+    // else if (urlParts.pathname === '/shutdown') {
+    //   process.exit(1);
+    // }
+    else {
+      respond_error(500, 'invalid path ' + urlParts.pathname, resp);
+    };
+  }
+  catch (ex) {
+    try {
+      respond_error(505, ex.message, resp)
+    }
+    catch { }
+    console.log(ex)
+  }
   return true;
 };
 
@@ -114,32 +144,6 @@ async function fetchDiaJson(endpointPlusParam: string): Promise<ErrData> {
   return response
 }
 
-//-------------------------------------------------
-// resolve a request by calling Dia api endpoint 
-// and then calling the originating contract with the data
-//-------------------------------------------------
-async function resolveDiaRequest(r: PendingRequest) {
-  console.log(r.contract_account_id, r.request_id, r.data_key, r.data_item)
-  let result = new ErrData()
-  TotalRestartsBcTime++;
-  switch (r.data_key) {
-    case "symbols":
-      result = await fetchDiaJson("symbols")
-      break;
-
-    case "quote":
-      result = await fetchDiaJson("quotation/" + r.data_item)
-      break;
-
-    default:
-      result.err = "invalid data_key " + r.data_key
-  }
-  //always send result (err,data) to calling contract
-  console.log("near.call", r.contract_account_id, r.callback, result, 200)
-  await near.call(r.contract_account_id, r.callback, result, credentials.account_id, credentials.private_key, 100)
-  TotalRestarts++
-  if (result.err) TotalRestartsBecauseErrors++;
-}
 
 function saveDatabase() {
   fs.writeFileSync("database", JSON.stringify(database))
@@ -168,8 +172,8 @@ function get_db_info(vindex: number) {
 }
 
 function restart(vindex: number) {
-  console.log("RESTARTING",vindex)
-  spawn("bash", ["restart.sh", vindex + ""])
+  console.log("RESTARTING", vindex)
+  spawnAsync("bash", ["restart.sh", vindex + ""])
   TotalRestarts++;
   const info = get_db_info(vindex)
   info.lastRestart = Date.now()
@@ -190,7 +194,7 @@ async function checkHealth(vindex: number) {
   const container = "nearup" + vindex;
   const account = "staking-pool-" + vindex;
 
-  let logs = spawn("bash", ["get-logs.sh", vindex + ""])
+  let logs = spawnSync("bash", ["get-logs.sh", vindex + ""])
 
   TotalPollingCalls++
 
@@ -198,7 +202,7 @@ async function checkHealth(vindex: number) {
   let isValidating = false
   let lastBlock = 0;
 
-  let errCount=0
+  let errCount = 0
 
   let lines = logs.split('\n')
   for (let line of lines) {
@@ -221,7 +225,7 @@ async function checkHealth(vindex: number) {
       console.error(ex.message);
       isOk = false;
       errCount++;
-      if (errCount>5) break;
+      if (errCount > 5) break;
     }
   }
 

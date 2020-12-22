@@ -28,9 +28,9 @@ export function yton(yoctos:string):string {
     return units
 }
 
-export function spawn(command:string, args:(string|any)[]):string {
+export function spawnSync(command:string, args:(string|any)[]):string {
     
-    if (debug) console.log(`${command} ${args.join(" ")}`)
+    console.log("spawnSync:",command,args.join(" "))
     const execResult = child_process.spawnSync(command, args, { shell: true }) // shell:true => to be able to invoke near-cli on windows
 
     // console.log(execResult.stdout.toString())
@@ -65,3 +65,16 @@ export function spawn(command:string, args:(string|any)[]):string {
     return removeColors(stdo)
 }
 
+export function spawnAsync(command:string, args:(string|any)[]):void {
+    console.log("spawnAsync:",command,args.join(" "))
+    const ls = child_process.spawn( command, args );
+    ls.stdout.on( 'data', data => {
+        console.log( `stdout: ${data}` );
+    } );
+    ls.stderr.on( 'data', data => {
+        console.log( `stderr: ${data}` );
+    } );
+    ls.on( 'close', code => {
+        console.log( `child process exited with code ${code}` );
+    } );
+}
