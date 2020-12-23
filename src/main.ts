@@ -158,7 +158,7 @@ function get_db_info(vindex: number) {
 }
 
 //-------------------------------------------------
-function restart(vindex: number) {
+async function restart(vindex: number) {
   console.log("RESTARTING", vindex)
   spawnAsync("bash", ["restart.sh", vindex + ""])
   TotalRestarts++;
@@ -184,8 +184,11 @@ async function ping(vindex: number) {
 //-------------------------------------------------
 let seqId = 0;
 
+function minutesSince(when: number): number {
+  return (Date.now() - when) / 1000 / 60
+}
 function hoursSince(when: number): number {
-  return (Date.now() - when) / (1000 * 60 * 60)
+  return minutesSince(when)/60
 }
 
 async function checkHealth(vindex: number) {
@@ -278,21 +281,18 @@ async function checkHealth(vindex: number) {
     isOk = false;
   }
 
-  if (!isOk) {
-    restart(vindex)
+  if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= 10)) {
+    await restart(vindex)
     TotalRestartsBecauseErrors++;
   }
-  else if (info.lastRestart) {
-    if (hoursSince(info.lastRestart) >= 48) { //restart every 2 days
-      restart(vindex)
-      TotalRestartsBcTime++;
+  else {
+    if (!isValidating && info.lastRestart && hoursSince(info.lastRestart) >= 48) { 
+        //restart every 2 days
+        await restart(vindex)
+        TotalRestartsBcTime++;
     }
-    else if (!isValidating && hoursSince(info.lastRestart) >= 2) {
-      restart(vindex)
-      TotalRestartsBcTime++;
-    }
-    else if (hoursSince(info.lastPing) >= 1) {
-      ping(vindex) //ping every hour
+    else if (info.lastPing && hoursSince(info.lastPing) >= 1.5) {
+      await ping(vindex) //ping every hour
       TotalPings++;
     }
   }
@@ -305,15 +305,15 @@ async function checkHealth(vindex: number) {
 async function pollingLoop() {
   //loop checking preiodically if there are pending requests
   try {
-    await checkHealth(vindex);
+    for (let vindex=2;vindex<=3;vindex++){
+      await checkHealth(vindex);
+    }
   }
   catch (ex) {
     console.error("ERR", ex.message)
   }
-  vindex++;
-  if (vindex > 4) vindex = 2;
-  //check again in 3 minutes (test-mode every 10 secs)
-  const seconds = testMode? 10 : 3*60
+  //check again in 5 minutes (test-mode every 10 secs)
+  const seconds = testMode? 10 : 5*60
   setTimeout(pollingLoop, seconds * 1000)
   
 }
@@ -328,7 +328,6 @@ type Database = {
   info: ValidatorInfo[];
 }
 let database: Database;
-let vindex = 2;
 
 readDatabase()
 
