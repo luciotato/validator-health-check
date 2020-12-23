@@ -8,11 +8,13 @@ import { inspect } from 'util';
 import { BareWebServer, respond_error } from './bare-web-server.js';
 import * as near from './near-api/near-rpc.js';
 import * as network from './near-api/network.js';
-import { spawnSync, spawnAsync } from './util/spawn.js';
+import { spawnSync, spawnAsync, removeColors } from './util/spawn.js';
 
 const NETWORK = "guildnet"
 network.setCurrent(NETWORK)
 const CREDENTIALS_FILE = `../../../.near-credentials/${NETWORK}/luciotato.${NETWORK}.json`
+
+let testMode = process.argv[2]=="test"
 
 const StarDateTime = new Date()
 let TotalPollingCalls = 0
@@ -191,7 +193,13 @@ async function checkHealth(vindex: number) {
   const container = "nearup" + vindex;
   const filter = "staking-pool-" + vindex;
 
-  let logs = spawnSync("bash", ["get-logs.sh", vindex + ""])
+  let logs:string;
+  if (testMode) {
+    logs = removeColors ( fs.readFileSync("log-example-"+vindex+".txt").toString() )
+  }
+  else {
+    logs = spawnSync("bash", ["get-logs.sh", vindex + ""])
+  }
 
   TotalPollingCalls++
 
@@ -200,6 +208,10 @@ async function checkHealth(vindex: number) {
   let lastBlock = 0;
   let lineCount = 0;
   let unkLines = 0;
+  let maxCpu=0;
+  let maxMem=0;
+  let memUnits:string="";
+
 
   let errCount = 0
 
@@ -221,6 +233,17 @@ async function checkHealth(vindex: number) {
         if (words[8].startsWith("V")) {
           isValidating = true;
         }
+        if (words[20].startsWith("CPU")) {
+          const cpu=parseInt(words[21]);
+          if (cpu>maxCpu) maxCpu=cpu;
+        }
+        if (words[22].toUpperCase().startsWith("MEM")) {
+          const mem=parseInt(words[23]);
+          if (mem>maxMem) {
+            maxMem=mem;
+            memUnits = words[24];
+          }
+        }
       }
       else {
         unkLines++;
@@ -236,7 +259,8 @@ async function checkHealth(vindex: number) {
 
   if (lastBlock == 0) isOk = false;
 
-  console.log(new Date(), vindex, "lastBlock", lastBlock, " isOk:", isOk, "isV:", isValidating, "lineCount", lineCount, "unkLines:", unkLines)
+  console.log(vindex, new Date(), 
+    `lastBlock:#${lastBlock} isOk:${isOk} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
 
   const info = get_db_info(vindex)
   const prevBlock = info.lastBlock
@@ -267,7 +291,7 @@ async function checkHealth(vindex: number) {
       restart(vindex)
       TotalRestartsBcTime++;
     }
-    else if (!isValidating && hoursSince(info.lastPing) >= 1) {
+    else if (hoursSince(info.lastPing) >= 1) {
       ping(vindex) //ping every hour
       TotalPings++;
     }
@@ -288,9 +312,10 @@ async function pollingLoop() {
   }
   vindex++;
   if (vindex > 4) vindex = 2;
-  //check again in 3 minutes
-  setTimeout(pollingLoop, 3 * 60 * 1000)
-  //test-mode every 10 secs: setTimeout(pollingLoop, 10 * 1000)
+  //check again in 3 minutes (test-mode every 10 secs)
+  const seconds = testMode? 10 : 3*60
+  setTimeout(pollingLoop, seconds * 1000)
+  
 }
 
 
