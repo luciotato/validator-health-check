@@ -190,6 +190,9 @@ function minutesSince(when: number): number {
 function hoursSince(when: number): number {
   return minutesSince(when)/60
 }
+function daysSince(when: number): number {
+  return hoursSince(when)/24
+}
 
 async function checkHealth(vindex: number) {
 
@@ -286,13 +289,13 @@ async function checkHealth(vindex: number) {
     TotalRestartsBecauseErrors++;
   }
   else {
-    if (!isValidating && info.lastRestart && hoursSince(info.lastRestart) >= 48) { 
-        //restart every 2 days
+    if (!isValidating && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
+        //even if isOk, restart every 5 days if not validating
         await restart(vindex)
         TotalRestartsBcTime++;
     }
-    else if (info.lastPing && hoursSince(info.lastPing) >= 1.5) {
-      await ping(vindex) //ping every hour
+    else if (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5)) {
+      await ping(vindex) //ping every hour and a half
       TotalPings++;
     }
   }
