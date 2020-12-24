@@ -32,13 +32,13 @@ function sp_contract(vindex:number): string{
 //---------------------
 function getVindexFromQuery(urlParts:url.UrlWithParsedQuery, resp: http.ServerResponse): number {
   if (typeof urlParts.query["q"] != "string") {
-    resp.end("query must be 2-4 and received:" + JSON.stringify(urlParts.query) + (typeof urlParts.query));
+    resp.end("query must be 1-5 and received:" + JSON.stringify(urlParts.query) + (typeof urlParts.query));
     return 0;
   }
   else {
     let vindex = parseInt(urlParts.query["q"]);
-    if (isNaN(vindex) || vindex < 2 || vindex > 4) {
-      resp.end("vindex must be 2-4 and received:" + urlParts.query);
+    if (isNaN(vindex) || vindex < config.from || vindex > config.to) {
+      resp.end(`vindex must be ${config.from}-${config.to} and received: ${urlParts.query}`);
       return 0;
     }
     return vindex;
@@ -308,7 +308,7 @@ async function checkHealth(vindex: number) {
 async function pollingLoop() {
   //loop checking preiodically if there are pending requests
   try {
-    for (let vindex=2;vindex<=3;vindex++){
+    for (let vindex=config.from; vindex<=config.to; vindex++){
       await checkHealth(vindex);
     }
   }
@@ -333,6 +333,18 @@ type Database = {
 let database: Database;
 
 readDatabase()
+
+//read config
+let config={from:2, to:3}
+try {
+  let buff = fs.readFileSync("../config.json")
+  config = JSON.parse(buff.toString())
+}
+catch (ex) {
+  console.error("Err reading '../config.json'",ex.message)
+  console.error('expected contents: {"from":3, "to":4}')
+  process.exit(1)
+}
 
 //----------------------
 // Get signing credentials
