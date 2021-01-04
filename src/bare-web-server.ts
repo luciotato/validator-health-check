@@ -63,6 +63,11 @@ export class BareWebServer {
         console.log("nodejs version: " + process.version + "\nBare Web Server listening on port " + this.port + "\nwwwRoot: " + this.wwwRoot);
     }
 
+    close() {
+        console.log("close",new Date())
+        this.httpServer.close();
+    }
+
     //------------------------------
     // helper function MinimalHandler (request, response)
     //---------------------------

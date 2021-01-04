@@ -80,9 +80,15 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
       resp.write("</pre>")
       resp.write("<br><hr><br>")
       resp.write("<pre>")
+      let tailText10 = spawnSync("tail", ["validator-health.log", "-n", "10"])
+      resp.write(tailText10)
+      resp.write("</pre>")
+      resp.write("<br><hr><br>")
+      resp.write("<pre>")
       let tailText = spawnSync("tail", ["validator-health.log", "-n", "400"])
       resp.write(tailText)
-      resp.end("</pre>")
+      resp.write("</pre>")
+      resp.end()
 
       //   server.writeFileContents('index.html', resp);
       //   resp.end();
@@ -302,25 +308,6 @@ async function checkHealth(vindex: number) {
 
 }
 
-//-----------------
-//Loops checking for pending requests in the SC and resolving them every 10 seconds
-//-----------------
-async function pollingLoop() {
-  //loop checking preiodically if there are pending requests
-  try {
-    for (let vindex=config.from; vindex<=config.to; vindex++){
-      await checkHealth(vindex);
-    }
-  }
-  catch (ex) {
-    console.error("ERR", ex.message)
-  }
-  //check again in 5 minutes (test-mode every 10 secs)
-  const seconds = testMode? 10 : 5*60
-  setTimeout(pollingLoop, seconds * 1000)
-  
-}
-
 
 type ValidatorInfo = {
   lastRestart: number;
@@ -364,3 +351,32 @@ server.start()
 
 //check for pending requests in the SC and resolve them
 pollingLoop();
+
+//-----------------
+//Loops checking for pending requests in the SC and resolving them every 10 seconds
+//-----------------
+let loopsExecuted=0;
+async function pollingLoop() {
+  //loop checking preiodically if there are pending requests
+  try {
+    for (let vindex=config.from; vindex<=config.to; vindex++){
+      await checkHealth(vindex);
+    }
+  }
+  catch (ex) {
+    console.error("ERR", ex.message)
+  }
+
+  loopsExecuted++;
+  if (loopsExecuted>=20 || (testMode && loopsExecuted>=5)) {
+    //cycle finished- gracefully end process, pm2 will restart it
+    server.close()
+    return;
+  }
+  else {
+    //check again in 5 minutes (test-mode every 10 secs)
+    const seconds = testMode? 10 : 5*60
+    setTimeout(pollingLoop, seconds * 1000)
+  }
+}
+
