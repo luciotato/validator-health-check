@@ -291,19 +291,19 @@ async function checkHealth(vindex: number) {
   }
 
   if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= 10)) {
+    //restart if it's not ok, and at least 10 mins passed since last restart 
     await restart(vindex)
     TotalRestartsBecauseErrors++;
   }
-  else {
-    if (!isValidating && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
-        //even if isOk, restart every 5 days if not validating
-        await restart(vindex)
-        TotalRestartsBcTime++;
-    }
-    else if (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5)) {
-      await ping(vindex) //ping every hour and a half
-      TotalPings++;
-    }
+  else if (!isValidating && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
+    //restart if 5 days passed since last restart and not validating rigth now (use the opportunity)
+    await restart(vindex)
+    TotalRestartsBcTime++;
+  }
+  else if (isOk && (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5))) {
+    //ping if isOK, every 1.5 hs
+    await ping(vindex) //ping every hour and a half
+    TotalPings++;
   }
 
 }
