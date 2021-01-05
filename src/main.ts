@@ -281,7 +281,7 @@ async function checkHealth(vindex: number) {
 
   //if block# does not advance
   if (prevBlock && lastBlock && prevBlock == lastBlock) {
-    console.error("block# NOT ADVANCING")
+    console.error(`prevBlock:#${prevBlock} lastBlock:#${lastBlock} - block# NOT ADVANCING`)
     isOk = false;
   }
 
