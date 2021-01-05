@@ -98,7 +98,7 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
     else if (urlParts.pathname === '/restart') {
       let vindex = getVindexFromQuery(urlParts,resp);
       if (vindex) {
-        restart(vindex)
+        restart(vindex,"user command /restart")
         resp.end("restaring " + vindex);
       }
     }
@@ -164,8 +164,8 @@ function get_db_info(vindex: number) {
 }
 
 //-------------------------------------------------
-async function restart(vindex: number) {
-  console.log("RESTARTING", vindex)
+async function restart(vindex: number, reason:string) {
+  console.log("RESTARTING", vindex, reason)
   spawnAsync("bash", ["restart.sh", vindex + ""])
   TotalRestarts++;
   const info = get_db_info(vindex)
@@ -271,9 +271,6 @@ async function checkHealth(vindex: number) {
 
   if (lastBlock == 0) isOk = false;
 
-  console.log(vindex, new Date(), 
-    `lastBlock:#${lastBlock} isOk:${isOk} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
-
   const info = get_db_info(vindex)
   const prevBlock = info.lastBlock
 
@@ -282,22 +279,25 @@ async function checkHealth(vindex: number) {
     saveDatabase()
   }
 
-  if (!isValidating) TotalNotValidating++
-
   //if block# does not advance
   if (prevBlock && lastBlock && prevBlock == lastBlock) {
     console.error("block# NOT ADVANCING")
     isOk = false;
   }
 
+  console.log(vindex, new Date(), 
+    `lastBlock:#${lastBlock} isOk:${isOk} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
+
+  if (!isValidating) TotalNotValidating++
+
   if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= 10)) {
     //restart if it's not ok, and at least 10 mins passed since last restart 
-    await restart(vindex)
+    await restart(vindex, minutesSince(info.lastRestart) + " mins passed since last restart and it's not ok")
     TotalRestartsBecauseErrors++;
   }
   else if (!isValidating && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
     //restart if 5 days passed since last restart and not validating rigth now (use the opportunity)
-    await restart(vindex)
+    await restart(vindex, daysSince(info.lastRestart) + " days passed since last restart and not validating rigth now (use the opportunity)")
     TotalRestartsBcTime++;
   }
   else if (isOk && (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5))) {
