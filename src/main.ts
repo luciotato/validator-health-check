@@ -11,8 +11,12 @@ import * as network from './near-api/network.js';
 import { spawnSync, spawnAsync, removeColors } from './util/spawn.js';
 
 const NETWORK = "guildnet"
+//@ts-ignore
+const SUFFIX = NETWORK=="mainnet"? "near" : NETWORK;
 network.setCurrent(NETWORK)
-const CREDENTIALS_FILE = `../../../.near-credentials/${NETWORK}/luciotato.${NETWORK}.json`
+const homedir = require('os').homedir()
+const MASTER_ACCOUNT = `luciotato.${SUFFIX}`
+const CREDENTIALS_FILE = path.join(homedir,`.near-credentials/${NETWORK}/${MASTER_ACCOUNT}.json`)
 
 let testMode = process.argv[2]=="test"
 
@@ -157,6 +161,7 @@ function get_db_info(vindex: number) {
       lastPing: Date.now()-1*24*60*60*1000,
       lastRestart: Date.now(),
       lastBlock: 0,
+      lastBlockDtm: 0,
     }
     database.info[vindex] = info
   }
@@ -273,15 +278,17 @@ async function checkHealth(vindex: number) {
 
   const info = get_db_info(vindex)
   const prevBlock = info.lastBlock
+  const prevBlockDtm = info.lastBlockDtm
 
   if (lastBlock) {
     info.lastBlock = lastBlock
+    info.lastBlockDtm = Date.now()
     saveDatabase()
   }
 
   //if block# does not advance
-  if (prevBlock && lastBlock && prevBlock == lastBlock) {
-    console.error(`prevBlock:#${prevBlock} lastBlock:#${lastBlock} - block# NOT ADVANCING`)
+  if (prevBlock && lastBlock && prevBlock == lastBlock && prevBlockDtm && minutesSince(prevBlockDtm)>0.5) {
+    console.error(`prevBlock:#${prevBlock} ${minutesSince(prevBlockDtm)} mins ago,  lastBlock:#${lastBlock} => block# NOT ADVANCING`)
     isOk = false;
   }
 
@@ -313,6 +320,7 @@ type ValidatorInfo = {
   lastRestart: number;
   lastPing: number;
   lastBlock: number;
+  lastBlockDtm: number;
 }
 type Database = {
   info: ValidatorInfo[];
@@ -353,7 +361,7 @@ server.start()
 pollingLoop();
 
 //-----------------
-//Loops checking for pending requests in the SC and resolving them every 10 seconds
+//Loops checking for validator health every 5 mins
 //-----------------
 let loopsExecuted=0;
 async function pollingLoop() {
