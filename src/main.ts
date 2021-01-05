@@ -239,17 +239,17 @@ async function checkHealth(vindex: number) {
         //ignore;
       }
       else if (words[4] == "INFO") {
-        if (words[6].startsWith("#")) {
+        if (words[6] && words[6].startsWith("#")) {
           lastBlock = parseInt(words[6].slice(1));
         }
-        if (words[8].startsWith("V")) {
+        if (words[8] && words[8].startsWith("V")) {
           isValidating = true;
         }
-        if (words[20].startsWith("CPU")) {
+        if (words[20] && words[20].startsWith("CPU")) {
           const cpu=parseInt(words[21]);
           if (cpu>maxCpu) maxCpu=cpu;
         }
-        if (words[22].toUpperCase().startsWith("MEM")) {
+        if (words[22] && words[22].toUpperCase().startsWith("MEM")) {
           const mem=parseInt(words[23]);
           if (mem>maxMem) {
             maxMem=mem;
