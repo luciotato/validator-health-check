@@ -196,7 +196,7 @@ async function ping(vindex: number) {
 let seqId = 0;
 
 function minutesSince(when: number): number {
-  return (Date.now() - when) / 1000 / 60
+  return Math.trunc((Date.now() - when) / 1000 / 60)
 }
 function hoursSince(when: number): number {
   return minutesSince(when)/60
@@ -222,6 +222,7 @@ async function checkHealth(vindex: number) {
 
   let isOk = true
   let isValidating = false
+  let isDownloadingHeaders = false
   let lastBlock = 0;
   let lineCount = 0;
   let unkLines = 0;
@@ -247,7 +248,10 @@ async function checkHealth(vindex: number) {
         if (words[6] && words[6].startsWith("#")) {
           lastBlock = parseInt(words[6].slice(1));
         }
-        if (words[8] && words[8].startsWith("V")) {
+        if (words[7] == "Downloading") {
+          isDownloadingHeaders = true;
+        }
+        else if (words[8] && words[8].startsWith("V")) {
           isValidating = true;
         }
         if (words[20] && words[20].startsWith("CPU")) {
@@ -293,11 +297,11 @@ async function checkHealth(vindex: number) {
   }
 
   console.log(vindex, new Date(), 
-    `lastBlock:#${lastBlock} isOk:${isOk} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
+    `lastBlock:#${lastBlock} isOk:${isOk} isDownloadingHeaders:${isDownloadingHeaders} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
 
   if (!isValidating) TotalNotValidating++
 
-  if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= 10)) {
+  if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= (isDownloadingHeaders?30:10) )) {
     //restart if it's not ok, and at least 10 mins passed since last restart 
     await restart(vindex, minutesSince(info.lastRestart) + " mins passed since last restart and it's not ok")
     TotalRestartsBecauseErrors++;
