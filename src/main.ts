@@ -341,10 +341,14 @@ catch (ex) {
   process.exit(1)
 }
 
+//-----------
+// Log start
+//-----------
+console.log(process.cwd())
+console.error("err output test")
 //----------------------
 // Get signing credentials
 //-----------------------
-console.log(process.cwd())
 let credentialsString = fs.readFileSync(CREDENTIALS_FILE).toString();
 let credentials = JSON.parse(credentialsString)
 
