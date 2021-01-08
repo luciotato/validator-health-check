@@ -306,12 +306,12 @@ async function checkHealth(vindex: number) {
     await restart(vindex, minutesSince(info.lastRestart) + " mins passed since last restart and it's not ok")
     TotalRestartsBecauseErrors++;
   }
-  else if (!isValidating && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
+  else if (!isValidating && !isDownloadingHeaders && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
     //restart if 5 days passed since last restart and not validating rigth now (use the opportunity)
     await restart(vindex, daysSince(info.lastRestart) + " days passed since last restart and not validating rigth now (use the opportunity)")
     TotalRestartsBcTime++;
   }
-  else if (isOk && (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5))) {
+  else if (isOk && !isDownloadingHeaders && (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5))) {
     //ping if isOK, every 1.5 hs
     await ping(vindex) //ping every hour and a half
     TotalPings++;
