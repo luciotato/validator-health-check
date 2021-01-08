@@ -221,8 +221,8 @@ async function checkHealth(vindex: number) {
   TotalPollingCalls++
 
   let isOk = true
+  let isDownloading = false
   let isValidating = false
-  let isDownloadingHeaders = false
   let lastBlock = 0;
   let lineCount = 0;
   let unkLines = 0;
@@ -249,7 +249,7 @@ async function checkHealth(vindex: number) {
           lastBlock = parseInt(words[6].slice(1));
         }
         if (words[7] == "Downloading") {
-          isDownloadingHeaders = true;
+          isDownloading = true;
         }
         else if (words[8] && words[8].startsWith("V")) {
           isValidating = true;
@@ -297,21 +297,21 @@ async function checkHealth(vindex: number) {
   }
 
   console.log(vindex, new Date(), 
-    `lastBlock:#${lastBlock} isOk:${isOk} isDownloadingHeaders:${isDownloadingHeaders} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
+    `lastBlock:#${lastBlock} isOk:${isOk} isDownloading:${isDownloading} isValidating:${isValidating} lc:${lineCount} unkl:${unkLines} CPU:${maxCpu}% Mem:${maxMem}${memUnits}`)
 
   if (!isValidating) TotalNotValidating++
 
-  if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= (isDownloadingHeaders?30:10) )) {
+  if (!isOk && (!info.lastRestart || minutesSince(info.lastRestart) >= (isDownloading?30:10) )) {
     //restart if it's not ok, and at least 10 mins passed since last restart 
     await restart(vindex, minutesSince(info.lastRestart) + " mins passed since last restart and it's not ok")
     TotalRestartsBecauseErrors++;
   }
-  else if (!isValidating && !isDownloadingHeaders && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
+  else if (!isValidating && !isDownloading && info.lastRestart && daysSince(info.lastRestart) >= 5) { 
     //restart if 5 days passed since last restart and not validating rigth now (use the opportunity)
     await restart(vindex, daysSince(info.lastRestart) + " days passed since last restart and not validating rigth now (use the opportunity)")
     TotalRestartsBcTime++;
   }
-  else if (isOk && !isDownloadingHeaders && (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5))) {
+  else if (isOk && !isDownloading && (!info.lastPing || (info.lastPing && hoursSince(info.lastPing) >= 1.5))) {
     //ping if isOK, every 1.5 hs
     await ping(vindex) //ping every hour and a half
     TotalPings++;
