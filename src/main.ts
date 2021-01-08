@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as url from 'url';
+import * as os from 'os';
 
 import { inspect } from 'util';
 
@@ -10,12 +11,15 @@ import * as near from './near-api/near-rpc.js';
 import * as network from './near-api/network.js';
 import { spawnSync, spawnAsync, removeColors } from './util/spawn.js';
 
+const hostname = os.hostname()
+
 const NETWORK = "guildnet"
+network.setCurrent(NETWORK)
 //@ts-ignore
 const SUFFIX = NETWORK=="mainnet"? "near" : NETWORK;
-network.setCurrent(NETWORK)
-const homedir = require('os').homedir()
+
 const MASTER_ACCOUNT = `luciotato.${SUFFIX}`
+const homedir = os.homedir()
 const CREDENTIALS_FILE = path.join(homedir,`.near-credentials/${NETWORK}/${MASTER_ACCOUNT}.json`)
 
 let testMode = process.argv[2]=="test"
@@ -65,7 +69,7 @@ function appHandler(server: BareWebServer, urlParts: url.UrlWithParsedQuery, req
     }
     else if (urlParts.pathname === '/') {
       //GET / (root) web server returns:
-      server.writeFileContents("index-head.html", resp);
+      server.writeFileContents("index-head.html", resp, {hostname:hostname});
       resp.write(`
       <table>
       <tr><td>Start</td><td>${StarDateTime.toString()}</td></tr>    
